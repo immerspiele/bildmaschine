@@ -1,0 +1,12 @@
+{
+  "port": 8888,
+  "host": "localhost",
+  "destination": "rendered",
+  "path": "/bild",
+  "buckets": {
+    "kd": {
+      "key": "KLX923HWSD8",
+      "url": "https://example.org/public/uploads/"
+    }
+  }
+}

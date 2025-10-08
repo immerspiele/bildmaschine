@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bild Generate URL</title>
+</head>
+<body>
+  <form action="#" id="form">
+    <div id="result"></div>
+    <div>
+      <label for="bucket">Bucket</label>
+      <input type="text" name="bucket" id="bucket" placeholder="e.g. kd" />
+    </div>
+
+    <div>
+      <label for="image">Image</label>
+      <input type="text" name="image" id="image" placeholder="e.g. sample.jpg" />
+    </div>
+
+    <div>
+      <label for="key">Key</label>
+      <input type="text" name="key" id="key" placeholder="e.g. XYZ1234567890" />
+    </div>
+
+    <div>
+      <label for="quality">Quality</label>
+      <input type="text" name="quality" id="quality" placeholder="e.g. 80" value="80" />
+    </div>
+
+    <div>
+      <label for="size">Size</label>
+      <input type="text" name="size" id="size" placeholder="e.g. 800" value="500x400" />
+    </div>
+
+    <button type="submit">Generate URL</button>
+  </form>
+  <script>
+    const $form = document.getElementById('form');
+    const $result = document.getElementById('result');
+    const $bucket = document.getElementById('bucket');
+    const $image = document.getElementById('image');
+    const $key = document.getElementById('key');
+    const $quality = document.getElementById('quality');
+    const $size = document.getElementById('size');
+
+    $form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      let parts = [];
+
+      const bucket = $bucket.value;
+      const image = $image.value;
+      const key = $key.value;
+      const quality = $quality.value;
+      const sizeValue = $size.value;
+
+      if (bucket) {
+        parts.push(`b${bucket}`);
+      }
+
+      if (sizeValue) {
+        const [widthValue, heightValue] = sizeValue.split('x').map(Number);
+        const width = widthValue ? parseInt(widthValue, 10) : null;
+        const height = heightValue ? parseInt(heightValue, 10) : null;
+
+        if (width === height) {
+          parts.push(`s${width.toString(36)}`);
+        } else if (width && height) {
+          parts.push(`s${width.toString(36)}-${height.toString(36)}`);
+        } else if (width) {
+          parts.push(`s${width.toString(36)}`);
+        } else if (height) {
+          parts.push(`s-${height.toString(36)}`);
+        }
+      }
+
+      if (quality) {
+        const qualityNumber = parseInt(quality, 10);
+
+        if (Number.isNaN(qualityNumber) || qualityNumber < 1 || qualityNumber > 100) {
+          alert('Quality must be a number between 1 and 100');
+          return;
+        }
+
+        parts.push(`q${quality}`);
+      }
+
+      const queryString = parts.join('_');
+      const path = `/${queryString}-${image}`;
+
+      const signature = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${path}${key}`))
+        .then((hashBuffer) => {
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          return hashHex;
+        });
+
+
+      // const url = new URL(`http://localhost:3000/bild/${bucket}/q${quality},${width}/sample.jpg?key=${key}`);
+
+      $result.innerHTML = `${path}?s=${signature}`;
+    });
+  </script>
+</body>
+</html>
